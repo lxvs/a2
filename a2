@@ -1,0 +1,76 @@
+#!/bin/bash
+
+# lxvs.net
+# 2021-10-04
+
+set -o nounset
+
+mainUsage () {
+cat <<MAINUSG
+Usage:
+
+	a2 { start | stop | restart | status }
+
+MAINUSG
+}
+
+IfRunning () {
+	test -n "$(ps -ef | grep aria2c | grep -v grep)"
+}
+
+statusOp () {
+	if IfRunning
+	then
+		printf "%s\n" "aria2c is runing."
+	else
+		printf "%s\n" "aria2c is stopped."
+	fi
+}
+
+startOp () {
+	IfRunning && return 1
+	nohup aria2c --conf-path=/root/.aria2/aria2.conf >>"$logfile" 2>&1 &
+}
+
+stopOp () {
+	IfRunning || return
+	killall aria2c
+}
+
+restartOp () {
+	stopOp
+	sleep 1
+	startOp
+}
+
+main () {
+	local logfile=/root/.aria2/aria2.log
+	local op
+	if test $# -eq 0
+	then
+		mainUsage
+		return
+	fi
+	op="$1"
+	shift
+	case "$op" in
+	-v|--ver|--version)
+		printf "%s\n" "alpha"
+		return
+		;;
+	-h|--help)
+		mainUsage
+		return
+		;;
+	start|stop|restart|status)
+		${op}Op "$@"
+		;;
+	*)
+		>&2 printf "%s\n" "Invalid argument $op"
+		>&2 mainUsage
+		return 1
+		;;
+	esac
+}
+
+main "$@"
