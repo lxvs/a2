@@ -21,7 +21,7 @@ IfRunning () {
 statusOp () {
 	if IfRunning
 	then
-		printf "%s\n" "aria2c is runing."
+		printf "%s\n" "aria2c is running."
 	else
 		printf "%s\n" "aria2c is stopped."
 	fi
@@ -29,7 +29,9 @@ statusOp () {
 
 startOp () {
 	IfRunning && return 1
-	nohup aria2c --conf-path=/root/.aria2/aria2.conf >>"$logfile" 2>&1 &
+	test -e $HOME/.aria2/aria2.session || touch $HOME/.aria2/aria2.session
+	nohup aria2c --conf-path=$HOME/.aria2/aria2.conf >>"$logfile" 2>&1 &
+	IfRunning || tail $HOME/.aria2/aria2.log
 }
 
 stopOp () {
@@ -44,7 +46,7 @@ restartOp () {
 }
 
 main () {
-	local logfile=/root/.aria2/aria2.log
+	local logfile=$HOME/.aria2/aria2.log
 	local op
 	if test $# -eq 0
 	then
