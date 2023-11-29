@@ -9,70 +9,70 @@ mainUsage () {
 cat <<MAINUSG
 Usage:
 
-	a2 { start | stop | restart | status }
+    a2 { start | stop | restart | status }
 
 MAINUSG
 }
 
 IfRunning () {
-	test -n "$(ps -ef | grep aria2c | grep -v grep)"
+    test -n "$(ps -ef | grep aria2c | grep -v grep)"
 }
 
 statusOp () {
-	if IfRunning
-	then
-		printf "%s\n" "aria2c is running."
-	else
-		printf "%s\n" "aria2c is stopped."
-	fi
+    if IfRunning
+    then
+        printf "%s\n" "aria2c is running."
+    else
+        printf "%s\n" "aria2c is stopped."
+    fi
 }
 
 startOp () {
-	IfRunning && return 1
-	test -e $HOME/.aria2/aria2.session || touch $HOME/.aria2/aria2.session
-	nohup aria2c --conf-path=$HOME/.aria2/aria2.conf >>"$logfile" 2>&1 &
-	IfRunning || tail $HOME/.aria2/aria2.log
+    IfRunning && return 1
+    test -e $HOME/.aria2/aria2.session || touch $HOME/.aria2/aria2.session
+    nohup aria2c --conf-path=$HOME/.aria2/aria2.conf >>"$logfile" 2>&1 &
+    IfRunning || tail $HOME/.aria2/aria2.log
 }
 
 stopOp () {
-	IfRunning || return
-	killall aria2c
+    IfRunning || return
+    killall aria2c
 }
 
 restartOp () {
-	stopOp
-	sleep 1
-	startOp
+    stopOp
+    sleep 1
+    startOp
 }
 
 main () {
-	local logfile=$HOME/.aria2/aria2.log
-	local op
-	if test $# -eq 0
-	then
-		mainUsage
-		return
-	fi
-	op="$1"
-	shift
-	case "$op" in
-	-v|--ver|--version)
-		printf "%s\n" "alpha"
-		return
-		;;
-	-h|--help)
-		mainUsage
-		return
-		;;
-	start|stop|restart|status)
-		${op}Op "$@"
-		;;
-	*)
-		>&2 printf "%s\n" "Invalid argument $op"
-		>&2 mainUsage
-		return 1
-		;;
-	esac
+    local logfile=$HOME/.aria2/aria2.log
+    local op
+    if test $# -eq 0
+    then
+        mainUsage
+        return
+    fi
+    op="$1"
+    shift
+    case "$op" in
+    -v|--ver|--version)
+        printf "%s\n" "alpha"
+        return
+        ;;
+    -h|--help)
+        mainUsage
+        return
+        ;;
+    start|stop|restart|status)
+        ${op}Op "$@"
+        ;;
+    *)
+        >&2 printf "%s\n" "Invalid argument $op"
+        >&2 mainUsage
+        return 1
+        ;;
+    esac
 }
 
 main "$@"
