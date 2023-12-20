@@ -1,0 +1,3 @@
+= Deprecated
+
+Use https://github.com/lxvs/aria2-conf/blob/main/aria2c.service[aria2c.service^] instead.
