@@ -1,78 +1,84 @@
-#!/bin/bash
-
-# lxvs.net
-# 2021-10-04
+#!/bin/sh
 
 set -o nounset
 
-mainUsage () {
-cat <<MAINUSG
-Usage:
-
-    a2 { start | stop | restart | status }
-
-MAINUSG
+show_help () {
+cat <<EOF
+usage: a2 start
+   or: a2 stop
+   or: a2 restart
+   or: a2 status
+EOF
 }
 
-IfRunning () {
-    test -n "$(ps -ef | grep aria2c | grep -v grep)"
-}
-
-statusOp () {
-    if IfRunning
+cmd_status () {
+    if is_running
     then
-        printf "%s\n" "aria2c is running."
+        printf "aria2c is running.\n"
     else
-        printf "%s\n" "aria2c is stopped."
+        printf "aria2c is stopped.\n"
     fi
 }
 
-startOp () {
-    IfRunning && return 1
-    test -e $HOME/.aria2/aria2.session || touch $HOME/.aria2/aria2.session
-    nohup aria2c --conf-path=$HOME/.aria2/aria2.conf >>"$logfile" 2>&1 &
-    IfRunning || tail $HOME/.aria2/aria2.log
-}
-
-stopOp () {
-    IfRunning || return
+cmd_stop () {
+    is_running || return
     killall aria2c
 }
 
-restartOp () {
-    stopOp
+cmd_restart () {
+    cmd_stop
     sleep 1
-    startOp
+    cmd_start
 }
 
 main () {
-    local logfile=$HOME/.aria2/aria2.log
-    local op
-    if test $# -eq 0
-    then
-        mainUsage
-        return
-    fi
-    op="$1"
-    shift
-    case "$op" in
-    -v|--ver|--version)
-        printf "%s\n" "alpha"
-        return
-        ;;
-    -h|--help)
-        mainUsage
-        return
-        ;;
-    start|stop|restart|status)
-        ${op}Op "$@"
-        ;;
-    *)
-        >&2 printf "%s\n" "Invalid argument $op"
-        >&2 mainUsage
-        return 1
-        ;;
-    esac
+    local version="0.1.0"
+    local logfile="$HOME/log"
+    for arg in "$@"
+    do
+        case $arg in
+        start)
+            cmd_start "$@"
+            exit
+            ;;
+        stop)
+            cmd_stop "$@"
+            exit
+            ;;
+        restart)
+            cmd_restart "$@"
+            exit
+            ;;
+        status)
+            cmd_status "$@"
+            exit
+            ;;
+        -V|--version)
+            printf "%s\n" "$version"
+            exit 0
+            ;;
+        --help)
+            show_help
+            exit 0
+            ;;
+        *)
+            >&2 printf "error: invalid argument \`%s'\n" "$arg"
+            exit 1
+            ;;
+        esac
+    done
+    show_help
+}
+
+cmd_start () {
+    is_running && return 1
+    test -e $HOME/.aria2/aria2.session || touch $HOME/.aria2/aria2.session
+    nohup aria2c --conf-path=$HOME/.aria2/aria2.conf >>"$logfile" 2>&1 &
+    is_running || tail $HOME/.aria2/aria2.log
+}
+
+is_running () {
+    test -n "$(ps -ef | grep aria2c | grep -v grep)"
 }
 
 main "$@"
